@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/catatsuy/private-isu/benchmarker/checker"
-	"github.com/catatsuy/private-isu/benchmarker/util"
+	"github.com/illmaticindustries/private-isu/benchmarker/checker"
+	"github.com/illmaticindustries/private-isu/benchmarker/util"
 )
 
 func prepareUserdata(userdata string) ([]user, []user, []user, []string, []*checker.Asset, error) {

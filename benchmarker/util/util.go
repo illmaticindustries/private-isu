@@ -27,6 +27,9 @@ var (
 )
 
 func RandomNumber(max int) int {
+	if max == 0 {
+		return 0
+	}
 	return random.Int() % max
 }
 

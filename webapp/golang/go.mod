@@ -1,4 +1,4 @@
-module github.com/catatsuy/private-isu/webapp/golang
+module github.com/illmaticindustries/private-isu/webapp/golang
 
 go 1.18
 

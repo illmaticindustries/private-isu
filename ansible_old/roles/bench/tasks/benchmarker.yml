@@ -1,7 +1,7 @@
 ---
 - name: git clone private-isu
-  git: repo=https://github.com/catatsuy/private-isu.git
-       dest={{ gopath }}/src/github.com/catatsuy/private-isu
+  git: repo=https://github.com/illmaticindustries/private-isu.git
+       dest={{ gopath }}/src/github.com/illmaticindustries/private-isu
        version=master
        accept_hostkey=yes
   register: benchmarker
@@ -9,16 +9,16 @@
 - name: compile
   shell: "make"
   args:
-    chdir: "{{ gopath }}/src/github.com/catatsuy/private-isu/benchmarker"
+    chdir: "{{ gopath }}/src/github.com/illmaticindustries/private-isu/benchmarker"
   when: benchmarker.changed
 
 - name: install unzip command
   apt: name=unzip state=latest
 
 - name: download images
-  get_url: url=https://github.com/catatsuy/private-isu/releases/download/img/img.zip dest={{ gopath }}/src/github.com/catatsuy/private-isu/benchmarker/userdata/img.zip checksum=md5:4e66b924aa095030a9d152ab5f2015de
+  get_url: url=https://github.com/illmaticindustries/private-isu/releases/download/img/img.zip dest={{ gopath }}/src/github.com/illmaticindustries/private-isu/benchmarker/userdata/img.zip checksum=md5:4e66b924aa095030a9d152ab5f2015de
   register: imgzip
 
 - name: unarchive images
-  unarchive: src={{ gopath }}/src/github.com/catatsuy/private-isu/benchmarker/userdata/img.zip dest={{ gopath }}/src/github.com/catatsuy/private-isu/benchmarker/userdata copy=no
+  unarchive: src={{ gopath }}/src/github.com/illmaticindustries/private-isu/benchmarker/userdata/img.zip dest={{ gopath }}/src/github.com/illmaticindustries/private-isu/benchmarker/userdata copy=no
   when: imgzip.changed

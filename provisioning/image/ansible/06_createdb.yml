@@ -4,7 +4,7 @@
   gather_facts: yes
   tasks:
     - name: create mysqldump
-      get_url: url=https://github.com/catatsuy/private-isu/releases/download/img/dump.sql.bz2 dest=/home/isucon/backup/mysqldump.sql.bz2 force=1
+      get_url: url=https://github.com/illmaticindustries/private-isu/releases/download/img/dump.sql.bz2 dest=/home/isucon/backup/mysqldump.sql.bz2 force=1
     - name: set temporary password
       become: yes
       become_user: root

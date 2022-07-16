@@ -178,6 +178,7 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 	var posts []Post
 
 	for _, p := range results {
+		// called from getINdex. N+1 query
 		err := db.Get(&p.CommentCount, "SELECT COUNT(*) AS `count` FROM `comments` WHERE `post_id` = ?", p.ID)
 		if err != nil {
 			return nil, err
@@ -188,7 +189,7 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 			query += " LIMIT 3"
 		}
 		var comments []Comment
-		err = db.Select(&comments, query, p.ID)
+		err = db.Select(&comments, query, p.ID) //called from getIndex. N+1 query.
 		if err != nil {
 			return nil, err
 		}
@@ -207,7 +208,7 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 
 		p.Comments = comments
 
-		err = db.Get(&p.User, "SELECT * FROM `users` WHERE `id` = ?", p.UserID)
+		err = db.Get(&p.User, "SELECT * FROM `users` WHERE `id` = ?", p.UserID) //called from get Index. N+1 query.
 		if err != nil {
 			return nil, err
 		}

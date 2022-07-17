@@ -269,6 +269,43 @@ func getInitialize(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func getInitializeImage(w http.ResponseWriter, r *http.Request) {
+	results := []Post{}
+
+	err := db.Select(&results, "SELECT `id` FROM `posts`")
+	if err != nil {
+		log.Print(err)
+		return
+	}
+
+	for _, p := range results {
+		// called from getINdex. N+1 query
+		err := db.Get(&p, "SELECT `id`, `mime`, `imgdata` FROM `posts` WHERE `id` = ?", p.ID)
+		if err != nil {
+			return
+		}
+
+		ext := ""
+		switch p.Mime {
+		case "image/jpeg":
+			ext = "jpg"
+		case "image/png":
+			ext = "png"
+		case "image/gif":
+			ext = "gif"
+		default:
+			return //error
+		}
+
+		f, err := os.Create("/home/public/image/" + strconv.Itoa(p.ID) + "." + ext)
+		if err != nil {
+			return
+		}
+		defer f.Close()
+		f.Write(p.Imgdata)
+	}
+}
+
 func getLogin(w http.ResponseWriter, r *http.Request) {
 	me := getSessionUser(r)
 
@@ -390,7 +427,8 @@ func getIndex(w http.ResponseWriter, r *http.Request) {
 
 	results := []Post{}
 
-	err := db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` ORDER BY `created_at` DESC")
+	//err := db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` ORDER BY `created_at` DESC")
+	err := db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` ORDER BY `id` DESC")
 	if err != nil {
 		log.Print(err)
 		return
@@ -671,6 +709,25 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ext := ""
+	switch mime {
+	case "image/jpeg":
+		ext = "jpg"
+	case "image/png":
+		ext = "png"
+	case "image/gif":
+		ext = "gif"
+	default:
+		return //error
+	}
+
+	f, err := os.Create("/home/public/image/" + strconv.FormatInt(pid, 10) + "." + ext)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	f.Write(filedata)
+
 	http.Redirect(w, r, "/posts/"+strconv.FormatInt(pid, 10), http.StatusFound)
 }
 
@@ -683,7 +740,7 @@ func getImage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	post := Post{}
-	err = db.Get(&post, "SELECT * FROM `posts` WHERE `id` = ?", pid)
+	err = db.Get(&post, "SELECT `mime`, `imgdata` FROM `posts` WHERE `id` = ?", pid)
 	if err != nil {
 		log.Print(err)
 		return
@@ -837,6 +894,7 @@ func main() {
 	r := chi.NewRouter()
 
 	r.Get("/initialize", getInitialize)
+	r.Get("/initialize_image", getInitializeImage)
 	r.Get("/login", getLogin)
 	r.Post("/login", postLogin)
 	r.Get("/register", getRegister)

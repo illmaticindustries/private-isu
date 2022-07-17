@@ -690,12 +690,14 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	dummy := []byte("")
 	query := "INSERT INTO `posts` (`user_id`, `mime`, `imgdata`, `body`) VALUES (?,?,?,?)"
 	result, err := db.Exec(
 		query,
 		me.ID,
 		mime,
-		filedata,
+		//filedata,
+		dummy,
 		r.FormValue("body"),
 	)
 	if err != nil {

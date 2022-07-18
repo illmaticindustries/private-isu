@@ -34,6 +34,8 @@ var (
 	store       *gsm.MemcacheStore
 	posts_cache []Post
 	mu          sync.Mutex
+	users_cache map[int]User = map[int]User{}
+	users_mu    sync.Mutex
 )
 
 const (
@@ -81,6 +83,7 @@ func init() {
 	memcacheClient := memcache.New(memdAddr)
 	store = gsm.NewMemcacheStore(memcacheClient, "iscogram_", []byte("sendagaya"))
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+
 }
 
 func dbInitialize() {
@@ -216,9 +219,15 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 
 		p.Comments = comments
 
-		err = db.Get(&p.User, "SELECT * FROM `users` WHERE `id` = ?", p.UserID) //called from get Index. N+1 query.
-		if err != nil {
-			return nil, err
+		v, ok := users_cache[p.UserID]
+		if ok {
+			p.User = v
+		} else {
+			err = db.Get(&p.User, "SELECT * FROM `users` WHERE `id` = ?", p.UserID)
+			if err != nil {
+				return nil, err
+			}
+			users_cache[p.UserID] = p.User
 		}
 
 		p.CSRFToken = csrfToken
@@ -940,6 +949,12 @@ func postAdminBanned(w http.ResponseWriter, r *http.Request) {
 
 	for _, id := range r.Form["uid[]"] {
 		db.Exec(query, 1, id)
+		i, _ := strconv.Atoi(id)
+		v, ok := users_cache[i]
+		if ok {
+			v.DelFlg = 1
+			users_cache[i] = v
+		}
 	}
 
 	http.Redirect(w, r, "/admin/banned", http.StatusFound)

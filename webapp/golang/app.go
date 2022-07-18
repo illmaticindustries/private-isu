@@ -219,7 +219,9 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 
 		p.Comments = comments
 
+		users_mu.Lock()
 		v, ok := users_cache[p.UserID]
+		users_mu.Unlock()
 		if ok {
 			p.User = v
 		} else {
@@ -227,7 +229,9 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 			if err != nil {
 				return nil, err
 			}
+			users_mu.Lock()
 			users_cache[p.UserID] = p.User
+			users_mu.Unlock()
 		}
 
 		p.CSRFToken = csrfToken
@@ -950,10 +954,15 @@ func postAdminBanned(w http.ResponseWriter, r *http.Request) {
 	for _, id := range r.Form["uid[]"] {
 		db.Exec(query, 1, id)
 		i, _ := strconv.Atoi(id)
+
+		users_mu.Lock()
 		v, ok := users_cache[i]
+		users_mu.Unlock()
 		if ok {
 			v.DelFlg = 1
+			users_mu.Unlock()
 			users_cache[i] = v
+			users_mu.Unlock()
 		}
 	}
 

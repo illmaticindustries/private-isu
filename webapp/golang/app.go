@@ -28,8 +28,9 @@ import (
 )
 
 var (
-	db    *sqlx.DB
-	store *gsm.MemcacheStore
+	db          *sqlx.DB
+	store       *gsm.MemcacheStore
+	posts_cache []Post
 )
 
 const (
@@ -422,17 +423,31 @@ func getLogout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
+func Reverse_Array(list []Post) {
+	n := len(list)
+	for i := 0; i < (n / 2); i++ {
+		list[i], list[n-i-1] = list[n-i-1], list[i]
+	}
+}
+
 func getIndex(w http.ResponseWriter, r *http.Request) {
 	me := getSessionUser(r)
 
 	results := []Post{}
 
-	//err := db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` ORDER BY `created_at` DESC")
-	err := db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` ORDER BY `id` DESC")
-	if err != nil {
-		log.Print(err)
-		return
+	if true {
+		//err := db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` ORDER BY `created_at` DESC")
+		err := db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` ORDER BY `id` ASC")
+		posts_cache = results
+		if err != nil {
+			log.Print(err)
+			return
+		}
+	} else {
+		results = posts_cache
 	}
+
+	Reverse_Array(results)
 
 	posts, err := makePosts(results, getCSRFToken(r), false)
 	if err != nil {

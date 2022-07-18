@@ -734,35 +734,37 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func getImage(w http.ResponseWriter, r *http.Request) {
-	pidStr := chi.URLParam(r, "id")
-	pid, err := strconv.Atoi(pidStr)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
+	// serve from nginx
 
-	post := Post{}
-	err = db.Get(&post, "SELECT `mime`, `imgdata` FROM `posts` WHERE `id` = ?", pid)
-	if err != nil {
-		log.Print(err)
-		return
-	}
+	//pidStr := chi.URLParam(r, "id")
+	//pid, err := strconv.Atoi(pidStr)
+	//if err != nil {
+	//	w.WriteHeader(http.StatusNotFound)
+	//	return
+	//}
 
-	ext := chi.URLParam(r, "ext")
+	//post := Post{}
+	//err = db.Get(&post, "SELECT `mime`, `imgdata` FROM `posts` WHERE `id` = ?", pid)
+	//if err != nil {
+	//	log.Print(err)
+	//	return
+	//}
 
-	if ext == "jpg" && post.Mime == "image/jpeg" ||
-		ext == "png" && post.Mime == "image/png" ||
-		ext == "gif" && post.Mime == "image/gif" {
-		w.Header().Set("Content-Type", post.Mime)
-		_, err := w.Write(post.Imgdata)
-		if err != nil {
-			log.Print(err)
-			return
-		}
-		return
-	}
+	//ext := chi.URLParam(r, "ext")
 
-	w.WriteHeader(http.StatusNotFound)
+	//if ext == "jpg" && post.Mime == "image/jpeg" ||
+	//	ext == "png" && post.Mime == "image/png" ||
+	//	ext == "gif" && post.Mime == "image/gif" {
+	//	w.Header().Set("Content-Type", post.Mime)
+	//	_, err := w.Write(post.Imgdata)
+	//	if err != nil {
+	//		log.Print(err)
+	//		return
+	//	}
+	//	return
+	//}
+
+	//w.WriteHeader(http.StatusNotFound)
 }
 
 func postComment(w http.ResponseWriter, r *http.Request) {

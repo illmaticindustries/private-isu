@@ -69,7 +69,7 @@ type Comment struct {
 	UserID    int       `db:"user_id"`
 	Comment   string    `db:"comment"`
 	CreatedAt time.Time `db:"created_at"`
-	User      User
+	User      User      `db:"user"`
 }
 
 func init() {
@@ -187,10 +187,13 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 		//	return nil, err
 		//}
 
-		query := "SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC"
+		query := "SELECT `comments`.`id` AS `id`, `post_id`, `user_id` ,  `comment` , `comments`.`created_at` ,  `users`.`id` AS `user.id`,  `account_name` AS `user.account_name` , `passhash` AS `user.passhash`, `authority` AS `user.authority`,`del_flg` AS `user.del_flg` , `users`.`created_at` AS `user.created_at` FROM `comments` JOIN `users` ON  `comments`.`user_id` = `users`.`id`    WHERE `post_id` = ?  ORDER BY  `comments`.`created_at` DESC"
+
+		//query := "SELECT * FROM `comments` WHERE `post_id` = ? ORDER BY `created_at` DESC"
 		if !allComments {
 			query += " LIMIT 3"
 		}
+
 		var comments []Comment
 		err := db.Select(&comments, query, p.ID) //called from getIndex. N+1 query.
 		if err != nil {
@@ -198,12 +201,12 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 		}
 		p.CommentCount = len(comments)
 
-		for i := 0; i < len(comments); i++ {
-			err := db.Get(&comments[i].User, "SELECT * FROM `users` WHERE `id` = ?", comments[i].UserID)
-			if err != nil {
-				return nil, err
-			}
-		}
+		//for i := 0; i < len(comments); i++ {
+		//	err := db.Get(&comments[i].User, "SELECT * FROM `users` WHERE `id` = ?", comments[i].UserID)
+		//	if err != nil {
+		//		return nil, err
+		//	}
+		//}
 
 		// reverse
 		for i, j := 0, len(comments)-1; i < j; i, j = i+1, j-1 {

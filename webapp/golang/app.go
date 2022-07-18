@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"net/http/pprof"
@@ -31,6 +32,7 @@ var (
 	db          *sqlx.DB
 	store       *gsm.MemcacheStore
 	posts_cache []Post
+	mu          sync.Mutex
 )
 
 const (
@@ -235,6 +237,8 @@ func imageURL(p Post) string {
 		ext = ".png"
 	} else if p.Mime == "image/gif" {
 		ext = ".gif"
+	} else {
+		ext = "strange_mime"
 	}
 
 	return "/image/" + strconv.Itoa(p.ID) + ext
@@ -435,17 +439,20 @@ func getIndex(w http.ResponseWriter, r *http.Request) {
 
 	results := []Post{}
 
-	if true {
+	mu.Lock()
+	if len(posts_cache) == 0 {
+		//if true {
 		//err := db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` ORDER BY `created_at` DESC")
 		err := db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` ORDER BY `id` ASC")
-		posts_cache = results
+		copy(posts_cache, results)
 		if err != nil {
 			log.Print(err)
 			return
 		}
 	} else {
-		results = posts_cache
+		copy(results, posts_cache)
 	}
+	mu.Unlock()
 
 	Reverse_Array(results)
 
@@ -726,6 +733,7 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//create file
 	ext := ""
 	switch mime {
 	case "image/jpeg":
@@ -737,13 +745,29 @@ func postIndex(w http.ResponseWriter, r *http.Request) {
 	default:
 		return //error
 	}
-
 	f, err := os.Create("/home/public/image/" + strconv.FormatInt(pid, 10) + "." + ext)
 	if err != nil {
 		return
 	}
-	defer f.Close()
 	f.Write(filedata)
+	f.Close()
+
+	//append cache
+	p := Post{}
+	err = db.Get(&p, "SELECT `id`, `user_id`, `body`, `mime`, `created_at`  FROM `posts` WHERE `id` = ?", pid)
+	if err != nil {
+		return
+	}
+	mu.Lock()
+	if len(posts_cache) != 0 {
+		posts_cache = append(posts_cache, p)
+	}
+	mu.Unlock()
+
+	//f, err = os.Create("/home/public/log/" + strconv.FormatInt(pid, 10) + ".txt")
+	//newLine := strconv.FormatInt(pid, 10) + "," + p.Mime + "," + p.CreatedAt.String()
+	//_, err = fmt.Fprintln(f, newLine)
+	//f.Close()
 
 	http.Redirect(w, r, "/posts/"+strconv.FormatInt(pid, 10), http.StatusFound)
 }

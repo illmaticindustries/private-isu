@@ -11,3 +11,6 @@ docker-compose --compatibility up
 
 # add index to posts
 #    CREATE INDEX index_posts ON posts(created_at)
+
+# add index to comment 
+#    CREATE INDEX index_comments_userid ON comments(user_id);

@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -445,22 +446,27 @@ func getIndex(w http.ResponseWriter, r *http.Request) {
 
 	mu.Lock()
 	if len(posts_cache) == 0 {
+		mu.Unlock()
 		//if true {
 		//err := db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` ORDER BY `created_at` DESC")
 		err := db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` ORDER BY `id` ASC")
-		posts_cache = make([]Post, len(results))
-		copy(posts_cache, results)
 		if err != nil {
 			log.Print(err)
 			return
 		}
+
+		posts_cache = make([]Post, len(results))
+		copy(posts_cache, results)
+		Reverse_Array(results)
+
 	} else {
 		results = make([]Post, len(posts_cache))
 		copy(results, posts_cache)
-	}
-	mu.Unlock()
+		Reverse_Array(results)
+		//Reverse_Copy_Array(results, posts_cache)
+		mu.Unlock()
 
-	Reverse_Array(results)
+	}
 
 	posts, err := makePosts(results, getCSRFToken(r), false)
 	if err != nil {
@@ -590,10 +596,48 @@ func getPosts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	results := []Post{}
-	err = db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` WHERE `created_at` <= ? ORDER BY `created_at` DESC", t.Format(ISO8601Format))
+
+	//rand.Seed(time.Now().UnixNano())
+	//n := rand.Intn(100)
+
 	if err != nil {
-		log.Print(err)
-		return
+		panic(err)
+	}
+
+	n := len(posts_cache)
+	if n == 0 {
+		err = db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` WHERE `created_at` <= ? ORDER BY `created_at` DESC", t.Format(ISO8601Format))
+		if err != nil {
+			log.Print(err)
+			return
+		}
+
+		//f, _ := os.Create("/home/public/log/posts_unused_cache.txt")
+		//newLine := "cache unused\n"
+		//_, err = fmt.Fprintln(f, newLine)
+		//f.Close()
+	} else {
+
+		//i := 0
+		//for ; i < n; i++ {
+		//	if posts_cache[i].CreatedAt.After(t) {
+		//		break
+		//	}
+		//}
+
+		i := sort.Search(n, func(i int) bool { return posts_cache[i].CreatedAt.Before(t) })
+		results = make([]Post, i)
+		copy(results, posts_cache[0:i])
+
+		Reverse_Array(results)
+
+		//f, _ := os.Create("/home/public/log/posts_cache.txt")
+		//newLine := strconv.Itoa(i) + "," + strconv.Itoa(n)
+		//_, _ = fmt.Fprintln(f, newLine)
+		//newLine = posts_cache[i].CreatedAt.String() + ", " + t.String()
+		//_, _ = fmt.Fprintln(f, newLine)
+		//f.Close()
+
 	}
 
 	posts, err := makePosts(results, getCSRFToken(r), false)

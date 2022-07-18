@@ -27,8 +27,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
-          memory: 1g
+          cpus: '2'
+          memory: 8g
   mysql:
     image: mysql/mysql-server:8.0
     environment:
@@ -45,8 +45,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
-          memory: 1g
+          cpus: '2'
+          memory: 8g
   memcached:
     image: memcached:1.6
 volumes:
